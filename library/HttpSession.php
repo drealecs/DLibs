@@ -8,17 +8,18 @@ class HttpSession extends HttpClient
 {
 	
 	protected $_cookieFile ;
+	protected $_persistentCookie = true;
 	
-	public function __construct($persistId = null)
+	public function __construct($persistId = null, $persistentCookie = true)
 	{
 		parent::__construct();
 		
-		if (isset($persistId)) {
-			$this->_cookieFile = sys_get_temp_dir() . md5($persistId) . '.cookie.txt';
+		$this->_persistentCookie = $persistentCookie;
+		if (!isset($persistId)) {
+			$persistId = microtime();
+			$this->_persistentCookie = false;
 		}
-		else {
-			$this->_cookieFile = sys_get_temp_dir() . md5(microtime()) . '.cookie.txt';
-		}
+		$this->_cookieFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . md5($persistId) . '.cookie.txt';
 	}
 	
 	
@@ -52,6 +53,8 @@ class HttpSession extends HttpClient
 	public function __destruct()
 	{
 		parent::__destruct();
-		$this->resetSession();
+		if (!$this->_persistentCookie) {
+			$this->resetSession();
+		}
 	}
 }

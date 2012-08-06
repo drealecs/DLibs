@@ -12,14 +12,15 @@ class HttpSession extends HttpClient
 	
 	public function __construct($persistId = null, $persistentCookie = true)
 	{
-		parent::__construct();
-		
+
 		$this->_persistentCookie = $persistentCookie;
 		if (!isset($persistId)) {
 			$persistId = microtime();
 			$this->_persistentCookie = false;
 		}
 		$this->_cookieFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . md5($persistId) . '.cookie.txt';
+		
+		parent::__construct();
 	}
 	
 	

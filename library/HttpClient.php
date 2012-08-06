@@ -31,9 +31,8 @@ class HttpClient
 	{
 		curl_setopt($this->_curl, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($this->_curl, CURLOPT_SSL_VERIFYHOST, 1);
-		curl_setopt($this->_curl, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($this->_curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:11.0) Gecko/20100101 Firefox/11.0');
-		curl_setopt($this->_curl, CURLOPT_TIMEOUT, 60);
+		
+		curl_setopt($this->_curl, CURLOPT_FOLLOWLOCATION, false);
 		curl_setopt($this->_curl, CURLOPT_HEADERFUNCTION, array($this, 'processHeader'));
 		curl_setopt($this->_curl, CURLOPT_WRITEFUNCTION, array($this, 'processBody'));
 		

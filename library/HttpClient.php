@@ -12,9 +12,8 @@ class HttpClient
 	protected $_headers = array();
 	protected $_body = '';
 	
-	protected $_requestBody = '';
-	protected $_requestHeaders = array();
-	protected $_realRequestHeaders = array();
+	protected $_proxy;
+	protected $_proxyUserPwd;
 	
 	public function __construct()
 	{
@@ -33,12 +32,19 @@ class HttpClient
 		curl_setopt($this->_curl, CURLOPT_SSL_VERIFYHOST, 1);
 		
 		curl_setopt($this->_curl, CURLOPT_FOLLOWLOCATION, false);
-		curl_setopt($this->_curl, CURLOPT_HEADERFUNCTION, array($this, 'processHeader'));
-		curl_setopt($this->_curl, CURLOPT_WRITEFUNCTION, array($this, 'processBody'));
+		curl_setopt($this->_curl, CURLOPT_HEADERFUNCTION, array($this, '_processHeader'));
+		curl_setopt($this->_curl, CURLOPT_WRITEFUNCTION, array($this, '_processBody'));
 		
 		curl_setopt($this->_curl, CURLINFO_HEADER_OUT, true);
 		
 		curl_setopt($this->_curl, CURLOPT_HTTPHEADER, array());
+		
+		if (!empty($this->_proxy)) {
+			curl_setopt($ch, CURLOPT_PROXY, $this->_proxy);
+			if (!empty($this->_proxyUserPwd)) {
+				curl_setopt ($ch, CURLOPT_PROXYUSERPWD, $this->_proxyUserPwd);
+			}
+		}
 		
 	}
 	
@@ -52,32 +58,36 @@ class HttpClient
 		curl_setopt($this->_curl, CURLOPT_FOLLOWLOCATION, $follow);
 	}
 	
-	protected function processHeader($curl, $header)
+	protected function _processHeader($curl, $header)
 	{
 		$this->_headers[] = trim($header, "\r\n");
 		return strlen($header);
 	}
 	
-	protected function processBody($curl, $body)
+	protected function _processBody($curl, $body)
 	{
 		$this->_body .= $body;
 		return strlen($body);
 	}
 	
-	protected function callExec()
+	protected function _call()
 	{
 		$this->_headers = array();
 		$this->_body = '';
 		curl_exec($this->_curl);
 		$responseCode = curl_getinfo($this->_curl, CURLINFO_HTTP_CODE);
 		$effectiveUrl = curl_getinfo($this->_curl, CURLINFO_EFFECTIVE_URL);
-		$this->_realRequestHeaders = preg_split('#\R#', curl_getinfo($this->_curl, CURLINFO_HEADER_OUT));
+		$realRequestHeaders = preg_split('#\R#', curl_getinfo($this->_curl, CURLINFO_HEADER_OUT));
 		
 		$httpCall = new HttpCall($this->_headers, $this->_body);
 		
-		var_dump($this->_requestHeaders, $this->_realRequestHeaders, $this->_requestBody, $this->_headers, $this->_body, $responseCode, $effectiveUrl);
+		var_dump($this->_requestHeaders, $this->_realRequestHeaders, $this->_requestBody, $this->_headers, htmlspecialchars($this->_body), $responseCode, $effectiveUrl);
 		
 		return $httpCall;
+		
+	}
+	
+	public function call(){
 		
 	}
 	
@@ -102,14 +112,11 @@ class HttpClient
 	
 	public function get($url, $getVars = array(), $headers = array())
 	{
-		$this->_requestBody = '';
-		$this->_requestHeaders = $headers;
-		
 		$this->_resetCurlOptions();
 		curl_setopt($this->_curl, CURLOPT_CUSTOMREQUEST, 'GET');
 		curl_setopt($this->_curl, CURLOPT_URL, $this->_buildHttpQuery( $url, $getVars));
-		curl_setopt($this->_curl, CURLOPT_HTTPHEADER, $this->_requestHeaders);
-		return $this->callExec();
+		curl_setopt($this->_curl, CURLOPT_HTTPHEADER, $headers);
+		return $this->_call();
 	}
 	
 	public function post($url, $postVars = array(), $getVars = array(), $headers = array())
@@ -128,7 +135,7 @@ class HttpClient
 		curl_setopt($this->_curl, CURLOPT_POSTFIELDS, $this->_requestBody);
 		curl_setopt($this->_curl, CURLOPT_URL, $this->_buildHttpQuery( $url, $getVars));
 		curl_setopt($this->_curl, CURLOPT_HTTPHEADER, $this->_requestHeaders);
-		return $this->callExec();
+		return $this->_call();
 	}
 	
 	

@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^([^/\?]*)(/([^/\?]*))?.*$ test1.php [E=endPointCode:$1,E=endPointOperationCode:$3,END]
